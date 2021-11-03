@@ -11,4 +11,11 @@
 	<packaging>jar</packaging>
 	<name>ML in KenyaEMR API</name>
 	<description>API project for ML in KenyaEMR</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.github.jbytecode</groupId>
+			<artifactId>RCaller</artifactId>
+		</dependency>
+	</dependencies>
 </project>

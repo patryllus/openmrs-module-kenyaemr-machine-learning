@@ -41,6 +41,13 @@
 			<url>http://repo1.maven.org/maven2</url>
 		</repository>
 	</repositories>
+	<dependencies>
+		<dependency>
+			<groupId>com.github.jbytecode</groupId>
+			<artifactId>RCaller</artifactId>
+			<version>${rCallerVersion}</version>
+		</dependency>
+	</dependencies>
 	<pluginRepositories>
 		<pluginRepository>
 			<id>openmrs-repo</id>
@@ -54,5 +61,6 @@
 
     <properties>
         <openmrsPlatformVersion>1.11.6</openmrsPlatformVersion>
+		<rCallerVersion>4.0.2</rCallerVersion>
     </properties>
 </project>
