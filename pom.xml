@@ -47,6 +47,61 @@
 			<artifactId>RCaller</artifactId>
 			<version>${rCallerVersion}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.jpmml</groupId>
+			<artifactId>pmml-evaluator</artifactId>
+			<version>${jpmml.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod</artifactId>
+			<version>${webservicesRestVersion}</version>
+			<type>jar</type>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod-common</artifactId>
+			<version>${webservicesRestVersion}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod-1.8</artifactId>
+			<version>${webservicesRestVersion}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod-common</artifactId>
+			<version>${webservicesRestVersion}</version>
+			<classifier>tests</classifier>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>${jacksonVersion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>${jacksonVersion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jacksonVersion}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>${jaxbVersion}</version>
+		</dependency>
 	</dependencies>
 	<pluginRepositories>
 		<pluginRepository>
@@ -62,5 +117,9 @@
     <properties>
         <openmrsPlatformVersion>1.11.6</openmrsPlatformVersion>
 		<rCallerVersion>4.0.2</rCallerVersion>
-    </properties>
+		<jpmml.version>1.4.1</jpmml.version>
+		<jacksonVersion>2.10.1</jacksonVersion>
+		<jaxbVersion>2.3.1</jaxbVersion>
+		<webservicesRestVersion>2.26.0</webservicesRestVersion>
+	</properties>
 </project>
