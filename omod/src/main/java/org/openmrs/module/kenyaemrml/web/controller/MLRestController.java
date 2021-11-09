@@ -2,6 +2,9 @@ package org.openmrs.module.kenyaemrml.web.controller;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openmrs.module.kenyaemrml.api.ModelService;
+import org.openmrs.module.kenyaemrml.domain.ModelInputFields;
+import org.openmrs.module.kenyaemrml.domain.ScoringResult;
 import org.openmrs.module.kenyaemrml.util.Util;
 import org.openmrs.module.webservices.rest.SimpleObject;
 import org.openmrs.module.webservices.rest.web.RestConstants;
@@ -26,20 +29,19 @@ public class MLRestController extends BaseRestController {
 	@RequestMapping(method = RequestMethod.POST, value = "/casefindingscore")
 	@ResponseBody
 	public Object receiveSHR(HttpServletRequest request) {
-		
+		ModelService modelService = new ModelService();
 		String requestBody = null;
 		try {
 			requestBody = Util.fetchRequestBody(request.getReader());
+			ModelInputFields inputFields = Util.extractVariablesFromRequestBody(requestBody);
+			ScoringResult scoringResult = modelService.score("1", inputFields);
+			System.out.println("Scoring result: " + scoringResult.toString());
+			return scoringResult;
 		}
 		catch (IOException e) {
 			return new SimpleObject().add("ServerResponse", "Error extracting request body");
 		}
 		
-		/*		if (requestBody != null) {
-					MedicDataExchange shr = new MedicDataExchange();
-					return shr.processIncomingRegistration(requestBody);
-					
-				}*/
-		return new SimpleObject().add("Report", "The request could not be interpreted properly");
+		//return new SimpleObject().add("Report", "The request could not be interpreted properly");
 	}
 }

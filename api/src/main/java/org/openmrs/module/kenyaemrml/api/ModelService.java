@@ -27,8 +27,6 @@ public class ModelService {
 	private Log log = LogFactory.getLog(this.getClass());
 	
 	public ScoringResult score(String modelId, ModelInputFields inputFields) {
-		/*validator.validateModelId(modelId);
-		validator.validateModelInputFields(modelId, inputFields);*/
 		
 		try {
 			InputStream stream = ModelService.class.getClassLoader().getResourceAsStream("hts_xgb.pmml");

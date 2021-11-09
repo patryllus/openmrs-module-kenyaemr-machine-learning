@@ -3,6 +3,7 @@ package org.openmrs.module.kenyaemrml.util;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.openmrs.module.kenyaemrml.domain.ModelInputFields;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -62,10 +63,10 @@ public class Util {
 		return requestBodyJsonStr;
 	}
 	
-	public static Map<String, String> extractVariablesFromRequestBody(String requestBodyString) {
+	public static ModelInputFields extractVariablesFromRequestBody(String requestBodyString) {
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode tree = null;
-		Map<String, String> modelParams = new HashMap<String, String>();
+		Map<String, Object> modelParams = new HashMap<String, Object>();
 		try {
 			tree = (ObjectNode) mapper.readTree(requestBodyString);
 			
@@ -81,6 +82,9 @@ public class Util {
 			String keyValue = field.getValue().getTextValue();
 			modelParams.put(keyId, keyValue);
 		}
-		return modelParams;
+		
+		ModelInputFields inputFields = new ModelInputFields();
+		inputFields.setFields(modelParams);
+		return inputFields;
 	}
 }
