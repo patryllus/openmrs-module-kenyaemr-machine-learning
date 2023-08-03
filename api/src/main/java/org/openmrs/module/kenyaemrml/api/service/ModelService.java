@@ -1,23 +1,5 @@
 package org.openmrs.module.kenyaemrml.api.service;
 
-import java.io.BufferedInputStream;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -47,6 +29,12 @@ import org.openmrs.Program;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.impl.BaseOpenmrsService;
+import org.openmrs.calculation.patient.PatientCalculationContext;
+import org.openmrs.calculation.patient.PatientCalculationService;
+import org.openmrs.calculation.result.CalculationResultMap;
+import org.openmrs.calculation.result.ListResult;
+import org.openmrs.module.kenyacore.calculation.CalculationUtils;
+import org.openmrs.module.kenyacore.calculation.Calculations;
 import org.openmrs.module.kenyaemr.Dictionary;
 import org.openmrs.module.kenyaemr.api.KenyaEmrService;
 import org.openmrs.module.kenyaemr.metadata.HivMetadata;
@@ -63,6 +51,24 @@ import org.openmrs.module.reporting.common.Age;
 import org.openmrs.parameter.EncounterSearchCriteria;
 import org.openmrs.parameter.EncounterSearchCriteriaBuilder;
 import org.openmrs.ui.framework.SimpleObject;
+
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Service class used to prepare and score models
@@ -461,14 +467,15 @@ public class ModelService extends BaseOpenmrsService {
 	 */
 	public Integer getTotalAppointments(Patient patient) {
 		Integer ret = 0;
-		PatientWrapper patientWrapper = new PatientWrapper(patient);
-		
-		Form hivGreenCardForm = MetadataUtils.existing(Form.class, HivMetadata._Form.HIV_GREEN_CARD);
-		List<Encounter> hivClinicalEncounters = patientWrapper.allEncounters(hivGreenCardForm);
-		
+		PatientCalculationContext context = Context.getService(PatientCalculationService.class).createCalculationContext();
+		context.setNow(new Date());
+		CalculationResultMap allNextAppointmentDatesMap = Calculations.allObs(Dictionary.getConcept(Dictionary.RETURN_VISIT_DATE), Arrays.asList(patient.getPatientId()), context);
+		ListResult allNextAppointmentDateResults = (ListResult) allNextAppointmentDatesMap.get(patient.getPatientId());
+		List<Obs> listOfallNextAppointmentDates = CalculationUtils.extractResultValues(allNextAppointmentDateResults);
+
 		// get hiv greencard list of observations
-		if (hivClinicalEncounters != null) {
-			ret = hivClinicalEncounters.size();
+		if (listOfallNextAppointmentDates != null) {
+			ret = listOfallNextAppointmentDates.size();
 		}
 		return(ret);
 	}
@@ -478,6 +485,7 @@ public class ModelService extends BaseOpenmrsService {
 	 */
 	public SimpleObject getMissedAppointments(Patient patient) {
 		SimpleObject ret = new SimpleObject();
+		Boolean appointmentHonoured = false;
 		Integer total = 0;
 		Integer missedByOne = 0;
 		Integer missedByFive = 0;
@@ -486,22 +494,29 @@ public class ModelService extends BaseOpenmrsService {
 		Integer missedByFiveLastFive = 0;
 		Integer missedByThirtyLastFive = 0;
 		PatientWrapper patientWrapper = new PatientWrapper(patient);
-		
-		Form hivGreenCardForm = MetadataUtils.existing(Form.class, HivMetadata._Form.HIV_GREEN_CARD);
-		List<Encounter> hivClinicalEncounters = patientWrapper.allEncounters(hivGreenCardForm);
-		Collections.reverse(hivClinicalEncounters); // Sort Descending
+
+		PatientCalculationContext context = Context.getService(PatientCalculationService.class).createCalculationContext();
+		context.setNow(new Date());
+
+		CalculationResultMap allNextAppointmentDatesMap = Calculations.allObs(Dictionary.getConcept(Dictionary.RETURN_VISIT_DATE), Arrays.asList(patient.getPatientId()), context);
+		ListResult allNextAppointmentDateResults = (ListResult) allNextAppointmentDatesMap.get(patient.getPatientId());
+		List<Obs> listOfallNextAppointmentDates = CalculationUtils.extractResultValues(allNextAppointmentDateResults);
+		Collections.reverse(listOfallNextAppointmentDates); // Sort Descending
 		
 		// get hiv greencard list of observations
-		if (hivClinicalEncounters != null) {
-			for (int i = 0; i < hivClinicalEncounters.size(); i++) {
-				Encounter enc = hivClinicalEncounters.get(i);
-				SimpleObject encDetails = getEncDetails(enc.getObs(), enc, hivClinicalEncounters);
-				Boolean appointmentHonoured = (Boolean) encDetails.get("honoured");
-				if(appointmentHonoured == false) {
-					// System.out.println("appointmentPeriod : " + encDetails.get("appointmentPeriod"));
-					// System.out.println("encDate : " + encDetails.get("encDate"));
-					// System.out.println("tcaDate : " + encDetails.get("tcaDate"));
-					int missedBy = (int) encDetails.get("appointmentPeriod"); // days missed
+		if (listOfallNextAppointmentDates != null) {
+			// System.out.println("Total appointments : " + listOfallNextAppointmentDates.size());
+
+			for (int i = 0; i < listOfallNextAppointmentDates.size(); i++) {
+				Obs nextAppointmentObs = listOfallNextAppointmentDates.get(i);
+				// System.out.println("Latest appointment : " + nextAppointmentObs.getValueDate());
+				// System.out.println("Latest visit date : " +nextAppointmentObs.getObsDatetime());
+				int sameDay = new LocalDate(nextAppointmentObs.getObsDatetime()).compareTo(new LocalDate(nextAppointmentObs.getValueDate()));
+				if (sameDay == 0) {
+					// System.out.println("Honoured :");
+					appointmentHonoured = true;
+				}else{
+					int missedBy = Days.daysBetween(new LocalDate(nextAppointmentObs.getObsDatetime()), new LocalDate(nextAppointmentObs.getValueDate())).getDays();  // days missed
 					if(missedBy >= 1) {
 						// Missed by one day or more
 						missedByOne++;
